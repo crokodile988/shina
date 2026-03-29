@@ -1,0 +1,1859 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ШинМастер — Панель управления</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --red:       #C0001D;
+  --red-h:     #a5001a;
+  --red-dim:   rgba(192,0,29,0.1);
+  --black:     #111111;
+  --ink:       #1a1a1a;
+  --panel:     #161616;
+  --sidebar:   #131313;
+  --surface:   #1f1f1f;
+  --border:    #2a2a2a;
+  --border-l:  #333;
+  --txt:       #e0e0e0;
+  --txt-dim:   #888;
+  --txt-muted: #555;
+  --white:     #ffffff;
+  --green:     #22c55e;
+  --green-dim: rgba(34,197,94,0.12);
+  --blue:      #3b82f6;
+  --blue-dim:  rgba(59,130,246,0.12);
+  --amber:     #f59e0b;
+  --amber-dim: rgba(245,158,11,0.12);
+  --font-h: 'Barlow Condensed', sans-serif;
+  --font-b: 'DM Sans', sans-serif;
+  --font-m: 'JetBrains Mono', monospace;
+  --radius: 2px;
+}
+
+body {
+  font-family: var(--font-b);
+  background: var(--panel);
+  color: var(--txt);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* ──────────────────────────
+   LOGIN SCREEN
+────────────────────────── */
+#login-screen {
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--panel);
+  position: relative; overflow: hidden;
+}
+#login-screen::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    repeating-linear-gradient(
+      0deg, transparent 0, transparent 39px,
+      rgba(255,255,255,.025) 39px, rgba(255,255,255,.025) 40px
+    ),
+    repeating-linear-gradient(
+      90deg, transparent 0, transparent 39px,
+      rgba(255,255,255,.025) 39px, rgba(255,255,255,.025) 40px
+    );
+}
+.login-card {
+  position: relative; z-index: 1;
+  width: 400px;
+  background: var(--ink);
+  border: 1px solid var(--border-l);
+  border-top: 3px solid var(--red);
+  padding: 48px 40px;
+  animation: fadeUp .3s ease;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: none; }
+}
+.login-logo {
+  font-family: var(--font-h);
+  font-size: 24px; font-weight: 700; letter-spacing: .06em;
+  color: var(--white); margin-bottom: 6px;
+}
+.login-logo em { color: var(--red); font-style: normal; }
+.login-subtitle {
+  font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--txt-muted); margin-bottom: 36px;
+}
+.login-field { margin-bottom: 16px; }
+.login-field label {
+  display: block;
+  font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--txt-muted); margin-bottom: 7px;
+}
+.login-input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--txt);
+  font-family: var(--font-b); font-size: 14px;
+  padding: 12px 14px; outline: none;
+  transition: border-color .18s;
+}
+.login-input:focus { border-color: var(--red); }
+.login-input::placeholder { color: var(--txt-muted); }
+.login-btn {
+  width: 100%; margin-top: 8px;
+  background: var(--red); color: var(--white);
+  border: none; cursor: pointer;
+  font-family: var(--font-b); font-size: 14px; font-weight: 600;
+  letter-spacing: .04em; padding: 14px;
+  transition: background .18s;
+}
+.login-btn:hover { background: var(--red-h); }
+.login-err {
+  display: none;
+  background: rgba(192,0,29,.12);
+  border: 1px solid rgba(192,0,29,.3);
+  color: #f87171; font-size: 13px;
+  padding: 11px 14px; margin-bottom: 16px;
+}
+.login-err.show { display: block; }
+.login-back {
+  display: block; text-align: center; margin-top: 20px;
+  font-size: 12px; color: var(--txt-muted);
+  text-decoration: none; transition: color .18s;
+}
+.login-back:hover { color: var(--txt); }
+
+/* ──────────────────────────
+   ADMIN SHELL
+────────────────────────── */
+#admin-shell { display: none; min-height: 100vh; flex-direction: column; }
+#admin-shell.visible { display: flex; }
+
+/* TOP BAR */
+.topbar {
+  height: 56px;
+  background: var(--sidebar);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 28px;
+  gap: 24px;
+  flex-shrink: 0;
+  position: sticky; top: 0; z-index: 100;
+}
+.topbar-logo {
+  font-family: var(--font-h);
+  font-size: 20px; font-weight: 700; letter-spacing: .06em;
+  color: var(--white);
+  margin-right: 8px;
+}
+.topbar-logo em { color: var(--red); font-style: normal; }
+.topbar-sep {
+  width: 1px; height: 20px;
+  background: var(--border-l); flex-shrink: 0;
+}
+.topbar-badge {
+  font-size: 10px; font-weight: 600; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--red);
+  background: var(--red-dim); padding: 3px 10px;
+}
+.topbar-tabs {
+  display: flex; gap: 2px; margin-left: 16px;
+}
+.tb-tab {
+  background: none; border: none; cursor: pointer;
+  font-family: var(--font-b); font-size: 13px; font-weight: 500;
+  color: var(--txt-muted); padding: 6px 18px;
+  letter-spacing: .02em;
+  transition: color .18s, background .18s;
+  position: relative;
+}
+.tb-tab::after {
+  content: ''; position: absolute; left: 18px; right: 18px; bottom: -1px;
+  height: 2px; background: var(--red);
+  transform: scaleX(0); transition: transform .18s;
+}
+.tb-tab:hover { color: var(--txt); }
+.tb-tab.active { color: var(--white); }
+.tb-tab.active::after { transform: scaleX(1); }
+.new-badge {
+  display: inline-block;
+  background: var(--red); color: var(--white);
+  font-size: 10px; font-weight: 700;
+  padding: 1px 6px; margin-left: 6px;
+  vertical-align: middle;
+  border-radius: 2px;
+}
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+.topbar-user {
+  font-size: 12px; color: var(--txt-muted);
+}
+.logout-btn {
+  background: none; border: 1px solid var(--border-l); cursor: pointer;
+  font-family: var(--font-b); font-size: 12px; color: var(--txt-muted);
+  padding: 5px 14px; transition: color .18s, border-color .18s;
+}
+.logout-btn:hover { color: var(--txt); border-color: var(--txt-muted); }
+
+/* BODY */
+.admin-body {
+  flex: 1;
+  padding: 32px 36px;
+  max-width: 1360px; width: 100%;
+  margin: 0 auto;
+}
+
+/* TABS CONTENT */
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* ──────────────────────────
+   STATS ROW
+────────────────────────── */
+.stats-row {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 12px; margin-bottom: 28px;
+}
+.stat-box {
+  background: var(--ink);
+  border: 1px solid var(--border);
+  border-top: 2px solid transparent;
+  padding: 20px 24px;
+  transition: border-top-color .2s;
+}
+.stat-box:hover { border-top-color: var(--red); }
+.stat-box.red   { border-top-color: var(--red); }
+.stat-box.green { border-top-color: var(--green); }
+.stat-box.blue  { border-top-color: var(--blue); }
+.stat-val {
+  font-family: var(--font-h);
+  font-size: 44px; font-weight: 700; line-height: 1;
+  color: var(--white);
+}
+.stat-val.c-red   { color: var(--red); }
+.stat-val.c-green { color: var(--green); }
+.stat-val.c-blue  { color: var(--blue); }
+.stat-lbl {
+  font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--txt-muted); margin-top: 8px;
+}
+
+/* ──────────────────────────
+   TOOLBAR
+────────────────────────── */
+.toolbar {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.pane-title {
+  font-family: var(--font-h);
+  font-size: 22px; font-weight: 600; letter-spacing: .02em;
+  color: var(--white); margin-right: 8px;
+}
+.filter-chip {
+  background: none; border: 1px solid var(--border-l); cursor: pointer;
+  font-family: var(--font-b); font-size: 12px; font-weight: 500;
+  color: var(--txt-muted); padding: 6px 16px;
+  transition: all .18s; letter-spacing: .03em;
+}
+.filter-chip:hover { color: var(--txt); border-color: var(--txt-muted); }
+.filter-chip.on { color: var(--white); border-color: var(--red); background: var(--red-dim); }
+.search-box {
+  margin-left: auto;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--txt); font-family: var(--font-b); font-size: 13px;
+  padding: 7px 14px; outline: none; width: 220px;
+  transition: border-color .18s;
+}
+.search-box::placeholder { color: var(--txt-muted); }
+.search-box:focus { border-color: var(--red); }
+
+/* ──────────────────────────
+   TABLE
+────────────────────────── */
+.tbl-wrap {
+  background: var(--ink);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table thead th {
+  background: var(--surface);
+  padding: 11px 18px; text-align: left;
+  font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--txt-muted); font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.data-table tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background .15s;
+}
+.data-table tbody tr:last-child { border-bottom: none; }
+.data-table tbody tr:hover { background: rgba(255,255,255,.02); }
+.data-table td { padding: 14px 18px; font-size: 13px; vertical-align: middle; }
+.td-id { font-family: var(--font-m); font-size: 12px; color: var(--txt-muted); }
+.td-name { font-weight: 600; color: var(--white); }
+.td-sub  { font-size: 12px; color: var(--txt-muted); margin-top: 2px; }
+.td-phone { font-family: var(--font-m); font-size: 12px; color: var(--txt-dim); }
+.td-date  { font-family: var(--font-m); font-size: 12px; color: var(--txt-muted); }
+
+/* STATUS BADGE */
+.sbadge {
+  display: inline-block; padding: 3px 10px;
+  font-size: 11px; font-weight: 600; letter-spacing: .06em;
+  text-transform: uppercase; border-radius: 2px;
+}
+.sbadge.new        { background: var(--amber-dim); color: var(--amber); }
+.sbadge.inprogress { background: var(--blue-dim);  color: var(--blue); }
+.sbadge.done       { background: var(--green-dim); color: var(--green); }
+
+/* STATUS SELECT */
+.stt-select {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--txt); font-family: var(--font-b); font-size: 12px;
+  padding: 6px 10px; outline: none; cursor: pointer;
+  transition: border-color .18s;
+}
+.stt-select:focus { border-color: var(--red); }
+.stt-select option { background: #1a1a1a; }
+
+/* ROW ACTIONS */
+.row-actions { display: flex; gap: 6px; }
+.act-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  cursor: pointer; width: 30px; height: 30px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 14px; color: var(--txt-muted);
+  transition: all .18s;
+}
+.act-btn:hover { border-color: var(--red); color: var(--red); }
+.act-btn.del:hover { background: var(--red); border-color: var(--red); color: var(--white); }
+
+/* MOBILE ORDER CARDS */
+.mob-cards { display: none; }
+.mob-card {
+  background: var(--ink); border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  padding: 16px; margin-bottom: 8px;
+  transition: border-left-color .2s;
+}
+.mob-card.new        { border-left-color: var(--amber); }
+.mob-card.inprogress { border-left-color: var(--blue); }
+.mob-card.done       { border-left-color: var(--green); }
+.mob-card-top {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; margin-bottom: 10px; gap: 8px;
+}
+.mob-card-name { font-weight: 600; color: var(--white); font-size: 14px; }
+.mob-card-sub  { font-size: 12px; color: var(--txt-muted); margin-top: 2px; }
+.mob-card-row  {
+  display: flex; gap: 8px; align-items: center;
+  font-size: 12px; color: var(--txt-dim);
+  font-family: var(--font-m); margin-bottom: 8px;
+}
+.mob-card-row span { color: var(--txt-muted); font-family: var(--font-b); }
+.mob-card-bottom {
+  display: flex; align-items: center; gap: 8px;
+  border-top: 1px solid var(--border); padding-top: 10px; margin-top: 4px;
+}
+.mob-card-bottom .stt-select { flex: 1; }
+@media (max-width: 600px) {
+  .tbl-wrap table, .tbl-wrap thead, .tbl-wrap tbody { display: none; }
+  .mob-cards { display: block; }
+  .mob-cards .empty-state { display: block !important; }
+}
+.empty-state {
+  text-align: center; padding: 64px 40px; color: var(--txt-muted);
+}
+.empty-state .ei { font-size: 36px; margin-bottom: 12px; opacity: .4; }
+.empty-state p { font-size: 13px; line-height: 1.6; }
+
+/* ──────────────────────────
+   SERVICES EDITOR
+────────────────────────── */
+.svc-editor-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+.svc-edit-card {
+  background: var(--ink); border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  padding: 24px 22px;
+  transition: border-left-color .2s;
+}
+.svc-edit-card:hover { border-left-color: var(--red); }
+.svc-edit-card-title {
+  font-family: var(--font-h); font-size: 16px; font-weight: 600;
+  color: var(--white); margin-bottom: 16px; letter-spacing: .02em;
+}
+.edit-field { margin-bottom: 10px; }
+.edit-field label {
+  display: block;
+  font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--txt-muted); margin-bottom: 5px;
+}
+.edit-input {
+  width: 100%;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--txt); font-family: var(--font-b); font-size: 13px;
+  padding: 9px 12px; outline: none;
+  transition: border-color .18s;
+}
+.edit-input:focus { border-color: var(--red); }
+.edit-save-btn {
+  background: var(--red); color: var(--white);
+  border: none; cursor: pointer;
+  font-family: var(--font-b); font-size: 12px; font-weight: 600;
+  letter-spacing: .04em; padding: 9px 22px; margin-top: 8px;
+  transition: background .18s;
+}
+.edit-save-btn:hover { background: var(--red-h); }
+.edit-saved { display: none; font-size: 12px; color: var(--green); margin-left: 10px; }
+
+/* ──────────────────────────
+   SETTINGS
+────────────────────────── */
+.settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.settings-card {
+  background: var(--ink); border: 1px solid var(--border);
+  padding: 28px 28px 24px;
+}
+.settings-card-title {
+  font-family: var(--font-h); font-size: 18px; font-weight: 600;
+  color: var(--white); margin-bottom: 20px; letter-spacing: .02em;
+  padding-bottom: 14px; border-bottom: 1px solid var(--border);
+}
+.sf { margin-bottom: 14px; }
+.sf label {
+  display: block;
+  font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--txt-muted); margin-bottom: 6px;
+}
+.sf input {
+  width: 100%;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--txt); font-family: var(--font-b); font-size: 14px;
+  padding: 11px 13px; outline: none;
+  transition: border-color .18s;
+}
+.sf input:focus { border-color: var(--red); }
+.sf input::placeholder { color: var(--txt-muted); }
+.settings-save-btn {
+  background: var(--red); color: var(--white);
+  border: none; cursor: pointer;
+  font-family: var(--font-b); font-size: 13px; font-weight: 600;
+  letter-spacing: .04em; padding: 12px 28px; margin-top: 6px;
+  transition: background .18s;
+}
+.settings-save-btn:hover { background: var(--red-h); }
+.settings-save-btn.neutral {
+  background: var(--surface); border: 1px solid var(--border-l);
+  color: var(--txt);
+}
+.settings-save-btn.neutral:hover { background: #2e2e2e; }
+.pwd-err {
+  display: none;
+  color: #f87171; font-size: 12px; margin-top: 10px;
+}
+.pwd-err.show { display: block; }
+.pwd-ok {
+  display: none;
+  color: var(--green); font-size: 12px; margin-top: 10px;
+}
+.pwd-ok.show { display: block; }
+
+/* TOGGLE ROW */
+.toggle-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.toggle-row:last-of-type { border-bottom: none; }
+.toggle-lbl { font-size: 14px; color: var(--txt); }
+.toggle-sub { font-size: 12px; color: var(--txt-muted); margin-top: 2px; }
+.sw {
+  width: 40px; height: 22px;
+  background: var(--border-l); border: none; cursor: pointer;
+  position: relative; flex-shrink: 0;
+  transition: background .18s; border-radius: 11px;
+}
+.sw.on { background: var(--red); }
+.sw::after {
+  content: ''; position: absolute;
+  width: 16px; height: 16px; background: var(--white);
+  border-radius: 50%; top: 3px; left: 3px;
+  transition: left .18s; box-shadow: 0 1px 3px rgba(0,0,0,.4);
+}
+.sw.on::after { left: 21px; }
+
+.gal-admin-card {
+  background: var(--ink); border: 1px solid var(--border);
+  border-left: 3px solid var(--border); overflow: hidden;
+  transition: border-left-color .2s;
+}
+.gal-admin-card:hover { border-left-color: var(--red); }
+.gal-admin-img {
+  width: 100%; height: 160px; object-fit: cover; display: block;
+  background: var(--surface);
+}
+.gal-admin-body { padding: 14px 16px; }
+.gal-admin-caption { font-size: 13px; font-weight: 600; color: var(--white); margin-bottom: 10px; }
+.gal-admin-input {
+  width: 100%; background: var(--surface); border: 1px solid var(--border);
+  color: var(--txt); font-family: var(--font-b); font-size: 12px;
+  padding: 7px 10px; outline: none; margin-bottom: 8px;
+  transition: border-color .18s;
+}
+.gal-admin-input:focus { border-color: var(--red); }
+.gal-admin-actions { display: flex; gap: 8px; }
+.gal-save-btn {
+  flex: 1; background: var(--red); color: var(--white); border: none; cursor: pointer;
+  font-family: var(--font-b); font-size: 11px; font-weight: 600; padding: 8px;
+  transition: background .18s;
+}
+.gal-save-btn:hover { background: var(--red-h); }
+.gal-del-btn {
+  background: var(--surface); border: 1px solid var(--border); cursor: pointer;
+  font-size: 14px; padding: 8px 12px; color: var(--txt-muted);
+  transition: all .18s;
+}
+.gal-del-btn:hover { background: var(--red); border-color: var(--red); color: var(--white); }
+
+.overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.75); z-index: 500;
+  align-items: center; justify-content: center;
+}
+.overlay.open { display: flex; }
+.modal {
+  background: var(--ink); border: 1px solid var(--border-l);
+  border-top: 3px solid var(--red);
+  max-width: 500px; width: calc(100% - 40px);
+  padding: 36px 36px 32px;
+  position: relative;
+  animation: fadeUp .22s ease;
+}
+.modal-close {
+  position: absolute; top: 14px; right: 16px;
+  background: none; border: none; cursor: pointer;
+  font-size: 18px; color: var(--txt-muted);
+  transition: color .18s;
+}
+.modal-close:hover { color: var(--txt); }
+.modal-title {
+  font-family: var(--font-h); font-size: 24px; font-weight: 700;
+  color: var(--white); margin-bottom: 24px; letter-spacing: .02em;
+}
+.mf { margin-bottom: 14px; }
+.mf-lbl {
+  font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--txt-muted); margin-bottom: 4px;
+}
+.mf-val { font-size: 14px; color: var(--txt); }
+
+/* ──────────────────────────
+   TOAST
+────────────────────────── */
+.toast {
+  position: fixed; bottom: 20px; left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  background: var(--ink); color: var(--white);
+  border: 1px solid var(--border-l); border-left: 3px solid var(--red);
+  padding: 10px 22px; font-size: 13px;
+  z-index: 9999; opacity: 0; pointer-events: none;
+  transition: opacity .22s, transform .22s;
+  white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ──────────────────────────
+   MOBILE NAV DRAWER
+────────────────────────── */
+.mob-menu-btn {
+  display: none;
+  background: none; border: none; cursor: pointer;
+  color: var(--txt); font-size: 20px; padding: 4px 8px;
+  line-height: 1;
+}
+.mob-nav-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.7); z-index: 200;
+}
+.mob-nav-overlay.open { display: block; }
+.mob-nav-drawer {
+  position: fixed; top: 0; left: 0; bottom: 0;
+  width: 260px; background: var(--sidebar);
+  border-right: 1px solid var(--border-l);
+  z-index: 201; padding: 0;
+  transform: translateX(-100%);
+  transition: transform .25s ease;
+  display: flex; flex-direction: column;
+}
+.mob-nav-drawer.open { transform: translateX(0); }
+.mob-nav-header {
+  height: 56px; display: flex; align-items: center;
+  padding: 0 20px; border-bottom: 1px solid var(--border);
+  gap: 12px; flex-shrink: 0;
+}
+.mob-nav-logo {
+  font-family: var(--font-h); font-size: 20px; font-weight: 700;
+  letter-spacing: .06em; color: var(--white);
+}
+.mob-nav-logo em { color: var(--red); font-style: normal; }
+.mob-nav-close {
+  margin-left: auto; background: none; border: none;
+  cursor: pointer; color: var(--txt-muted); font-size: 18px;
+  padding: 4px;
+}
+.mob-nav-links {
+  padding: 12px 0; flex: 1;
+}
+.mob-nav-link {
+  display: block; width: 100%;
+  background: none; border: none; cursor: pointer;
+  font-family: var(--font-b); font-size: 15px; font-weight: 500;
+  color: var(--txt-muted); text-align: left;
+  padding: 14px 20px;
+  border-left: 3px solid transparent;
+  transition: color .18s, border-color .18s, background .18s;
+}
+.mob-nav-link:hover { color: var(--txt); background: rgba(255,255,255,.03); }
+.mob-nav-link.active {
+  color: var(--white); border-left-color: var(--red);
+  background: var(--red-dim);
+}
+.mob-nav-footer {
+  padding: 16px 20px; border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.mob-nav-user { font-size: 12px; color: var(--txt-muted); }
+.mob-logout-btn {
+  background: none; border: 1px solid var(--border-l); cursor: pointer;
+  font-family: var(--font-b); font-size: 12px; color: var(--txt-muted);
+  padding: 5px 12px; transition: color .18s, border-color .18s;
+}
+.mob-logout-btn:hover { color: var(--txt); border-color: var(--txt-muted); }
+
+/* ──────────────────────────
+   RESPONSIVE
+────────────────────────── */
+@media (max-width: 900px) {
+  .admin-body { padding: 20px 16px; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .settings-grid { grid-template-columns: 1fr; }
+  .topbar-tabs { display: none; }
+  .svc-editor-grid { grid-template-columns: 1fr; }
+  .mob-menu-btn { display: flex; align-items: center; }
+  .topbar { padding: 0 16px; gap: 12px; }
+  .topbar-logo { font-size: 17px; }
+  .topbar-sep { display: none; }
+  .topbar-badge { display: none; }
+  .topbar-user { display: none; }
+}
+
+@media (max-width: 600px) {
+  .stats-row { grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+  .stat-box { padding: 14px 16px; }
+  .stat-val { font-size: 32px; }
+
+  /* Toolbar becomes vertical on very small screens */
+  .toolbar { gap: 6px; }
+  .pane-title { font-size: 18px; }
+  .filter-chip { padding: 5px 12px; font-size: 11px; }
+  .search-box {
+    width: 100%; margin-left: 0;
+    order: 10; /* push to new line */
+    flex-basis: 100%;
+  }
+
+  /* Scrollable table */
+  .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .data-table { min-width: 560px; }
+  .data-table thead th { padding: 10px 12px; }
+  .data-table td { padding: 12px 12px; }
+
+  /* Hide less important columns */
+  .data-table .col-created { display: none; }
+
+  /* Modal */
+  .modal { padding: 24px 20px 20px; }
+  .modal-title { font-size: 20px; margin-bottom: 18px; }
+
+  /* Admin body */
+  .admin-body { padding: 16px 12px; }
+
+  /* Settings */
+  .settings-card { padding: 20px 18px 18px; }
+
+  /* Login card */
+  .login-card { width: calc(100% - 32px); padding: 32px 24px; }
+}
+
+@media (max-width: 380px) {
+  .stats-row { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .stat-val { font-size: 28px; }
+  .stat-lbl { font-size: 10px; }
+}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════ LOGIN SCREEN ══════════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">ШИН<em>МАСТЕР</em></div>
+    <div class="login-subtitle">Панель управления · Вход</div>
+    <div class="login-err" id="login-err">Неверный пароль. Попробуйте ещё раз.</div>
+    <div class="login-field">
+      <label>Пароль</label>
+      <input class="login-input" id="login-pwd" type="password"
+        placeholder="Введите пароль"
+        onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" onclick="doLogin()">Войти</button>
+    <a class="login-back" href="index.html">← Вернуться на сайт</a>
+  </div>
+</div>
+
+<!-- ══════════════ ADMIN SHELL ══════════════ -->
+<div id="admin-shell">
+
+  <div class="topbar">
+    <button class="mob-menu-btn" onclick="openMobNav()" aria-label="Меню">☰</button>
+    <div class="topbar-logo">ШИН<em>МАСТЕР</em></div>
+    <div class="topbar-sep"></div>
+    <span class="topbar-badge">Панель управления</span>
+    <div class="topbar-tabs">
+      <button class="tb-tab active" onclick="goTab('orders',this)">
+        Заявки <span class="new-badge" id="new-count-badge">0</span>
+      </button>
+      <button class="tb-tab" onclick="goTab('services',this)">Услуги</button>
+      <button class="tb-tab" onclick="goTab('gallery',this)">Галерея</button>
+      <button class="tb-tab" onclick="goTab('settings',this)">Настройки</button>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-user">Администратор</span>
+      <button class="logout-btn" onclick="doLogout()">Выйти</button>
+    </div>
+  </div>
+
+  <!-- Mobile nav drawer -->
+  <div class="mob-nav-overlay" id="mob-nav-overlay" onclick="closeMobNav()"></div>
+  <div class="mob-nav-drawer" id="mob-nav-drawer">
+    <div class="mob-nav-header">
+      <div class="mob-nav-logo">ШИН<em>МАСТЕР</em></div>
+      <button class="mob-nav-close" onclick="closeMobNav()">✕</button>
+    </div>
+    <div class="mob-nav-links">
+      <button class="mob-nav-link active" id="mnl-orders" onclick="mobGoTab('orders')">
+        📋 Заявки <span class="new-badge" id="mob-new-badge" style="display:none">0</span>
+      </button>
+      <button class="mob-nav-link" id="mnl-services" onclick="mobGoTab('services')">🔧 Услуги</button>
+      <button class="mob-nav-link" id="mnl-gallery"  onclick="mobGoTab('gallery')">🖼 Галерея</button>
+      <button class="mob-nav-link" id="mnl-settings" onclick="mobGoTab('settings')">⚙️ Настройки</button>
+    </div>
+    <div class="mob-nav-footer">
+      <span class="mob-nav-user">Администратор</span>
+      <button class="mob-logout-btn" onclick="doLogout()">Выйти</button>
+    </div>
+  </div>
+
+  <div class="admin-body">
+
+    <!-- ── ORDERS TAB ── -->
+    <div class="tab-pane active" id="pane-orders">
+      <div class="stats-row" id="stats-row"></div>
+      <div class="toolbar">
+        <span class="pane-title">Заявки</span>
+        <button class="filter-chip on"  onclick="setFilter('all',this)">Все</button>
+        <button class="filter-chip"     onclick="setFilter('new',this)">Новые</button>
+        <button class="filter-chip"     onclick="setFilter('inprogress',this)">В работе</button>
+        <button class="filter-chip"     onclick="setFilter('done',this)">Готово</button>
+        <input class="search-box" id="search" placeholder="Поиск по имени, телефону…" oninput="renderTable()">
+      </div>
+      <div class="tbl-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>№</th>
+              <th>Клиент</th>
+              <th>Телефон</th>
+              <th>Услуга</th>
+              <th>Дата / Время</th>
+              <th>Статус</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody id="tbl-body"></tbody>
+        </table>
+        <div class="empty-state" id="empty-state" style="display:none">
+          <div class="ei">📋</div>
+          <p>Заявок не найдено<br><small>Измените фильтр или дождитесь новых заявок с сайта</small></p>
+        </div>
+      </div>
+      <div class="mob-cards" id="mob-cards"></div>
+    </div>
+
+    <!-- ── SERVICES TAB ── -->
+    <div class="tab-pane" id="pane-services">
+      <div class="toolbar">
+        <span class="pane-title">Редактирование услуг</span>
+      </div>
+      <div class="svc-editor-grid" id="svc-editor-grid"></div>
+    </div>
+
+    <!-- ── GALLERY TAB ── -->
+    <div class="tab-pane" id="pane-gallery">
+      <div class="toolbar">
+        <span class="pane-title">Управление галереей</span>
+      </div>
+      <div class="settings-card" style="margin-bottom:20px">
+        <div class="settings-card-title">Добавить фото</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="sf"><label>URL изображения</label><input type="url" id="gal-url" placeholder="https://example.com/photo.jpg"></div>
+          <div class="sf"><label>Подпись</label><input type="text" id="gal-caption" placeholder="Название фото"></div>
+        </div>
+        <button class="settings-save-btn" onclick="addGalleryItem()" style="margin-top:4px">Добавить</button>
+      </div>
+      <div class="svc-editor-grid" id="gal-admin-grid" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr))"></div>
+    </div>
+
+    <!-- ── SETTINGS TAB ── -->
+    <div class="tab-pane" id="pane-settings">
+      <div class="toolbar">
+        <span class="pane-title">Настройки</span>
+      </div>
+      <div class="settings-grid">
+
+        <!-- Password change -->
+        <div class="settings-card">
+          <div class="settings-card-title">Смена пароля</div>
+          <div class="sf">
+            <label>Текущий пароль</label>
+            <input type="password" id="pwd-current" placeholder="Текущий пароль">
+          </div>
+          <div class="sf">
+            <label>Новый пароль</label>
+            <input type="password" id="pwd-new" placeholder="Минимум 6 символов">
+          </div>
+          <div class="sf">
+            <label>Повторите новый пароль</label>
+            <input type="password" id="pwd-confirm" placeholder="Повторите пароль">
+          </div>
+          <div class="pwd-err" id="pwd-err"></div>
+          <div class="pwd-ok"  id="pwd-ok">✓ Пароль успешно изменён</div>
+          <button class="settings-save-btn" onclick="changePassword()">Сохранить пароль</button>
+        </div>
+
+        <!-- Email notifications -->
+        <div class="settings-card">
+          <div class="settings-card-title">Email-уведомления</div>
+          <div class="sf">
+            <label>Email для уведомлений</label>
+            <input type="email" id="notif-email" placeholder="admin@example.com">
+          </div>
+          <div class="toggle-row">
+            <div><div class="toggle-lbl">Новая заявка</div><div class="toggle-sub">Письмо при поступлении заявки</div></div>
+            <button class="sw on" id="sw-new" onclick="this.classList.toggle('on')"></button>
+          </div>
+          <div class="toggle-row">
+            <div><div class="toggle-lbl">Смена статуса</div><div class="toggle-sub">При изменении статуса заявки</div></div>
+            <button class="sw" id="sw-status" onclick="this.classList.toggle('on')"></button>
+          </div>
+          <div class="toggle-row">
+            <div><div class="toggle-lbl">Ежедневная сводка</div><div class="toggle-sub">Итоги дня в 21:00</div></div>
+            <button class="sw" id="sw-daily" onclick="this.classList.toggle('on')"></button>
+          </div>
+          <button class="settings-save-btn" style="margin-top:16px" onclick="saveNotif()">Сохранить</button>
+          <p style="font-size:11px;color:var(--txt-muted);margin-top:12px;line-height:1.6">
+            * Email-рассылка реализуется на сервере через Nodemailer / SendGrid. Это UI для управления настройками.
+          </p>
+        </div>
+
+        <!-- Сайт -->
+        <div class="settings-card">
+          <div class="settings-card-title">Контактные данные сайта</div>
+          <div class="sf"><label>Телефон</label><input type="tel" id="s-phone" placeholder="+7 (495) 000-00-00"></div>
+          <div class="sf"><label>Адрес</label><input type="text" id="s-address" placeholder="ул. Шинная, д. 14"></div>
+          <div class="sf"><label>Подпись к адресу</label><input type="text" id="s-addresssub" placeholder="500 м от ст. м. Автозаводская"></div>
+          <div class="sf"><label>Telegram (ник или ссылка)</label><input type="text" id="s-tg" placeholder="@shinmaster_msk"></div>
+          <div class="sf"><label>WhatsApp (номер)</label><input type="text" id="s-whatsapp" placeholder="+74950000000"></div>
+          <div class="sf"><label>Режим работы</label><input type="text" id="s-hours" placeholder="Пн–Вс, 08:00–21:00"></div>
+          <button class="settings-save-btn" onclick="saveSiteInfo()">Сохранить</button>
+          <p style="font-size:11px;color:var(--txt-muted);margin-top:10px;line-height:1.6">Данные сразу обновятся в разделе «Контакты» на сайте.</p>
+        </div>
+
+        <!-- Danger zone -->
+        <div class="settings-card">
+          <div class="settings-card-title" style="color:#f87171">Опасная зона</div>
+          <p style="font-size:13px;color:var(--txt-muted);margin-bottom:20px;line-height:1.7">
+            Действия в этом разделе необратимы. Будьте внимательны.
+          </p>
+          <button class="settings-save-btn neutral" onclick="clearDone()" style="margin-bottom:10px;display:block">
+            Удалить все выполненные заявки
+          </button>
+          <button class="settings-save-btn"
+            style="background:rgba(192,0,29,.15);border:1px solid rgba(192,0,29,.4);color:#f87171;display:block"
+            onclick="clearAllOrders()">
+            Удалить ВСЕ заявки
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /admin-body -->
+</div><!-- /admin-shell -->
+
+<!-- ORDER DETAIL MODAL -->
+<div class="overlay" id="order-modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title" id="modal-title">Заявка</div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════
+//  API helpers — токен хранится в sessionStorage
+// ════════════════════════════════════════════
+let AUTH_TOKEN = sessionStorage.getItem('sm_token') || '';
+
+const api = {
+  get: url => fetch(url, { headers:{ 'x-admin-token': AUTH_TOKEN } }).then(r=>r.json()),
+  post: (url,d) => fetch(url, { method:'POST',  headers:{'Content-Type':'application/json','x-admin-token':AUTH_TOKEN}, body:JSON.stringify(d) }).then(r=>r.json()),
+  put:  (url,d) => fetch(url, { method:'PUT',   headers:{'Content-Type':'application/json','x-admin-token':AUTH_TOKEN}, body:JSON.stringify(d) }).then(r=>r.json()),
+  patch:(url,d) => fetch(url, { method:'PATCH', headers:{'Content-Type':'application/json','x-admin-token':AUTH_TOKEN}, body:JSON.stringify(d) }).then(r=>r.json()),
+  del:  url     => fetch(url, { method:'DELETE',headers:{'x-admin-token':AUTH_TOKEN} }).then(r=>r.json()),
+};
+
+// ════════════════════════════════════════════
+//  BOOTSTRAP
+// ════════════════════════════════════════════
+(function(){
+  if (AUTH_TOKEN) showAdmin();
+})();
+
+// ════════════════════════════════════════════
+//  AUTH
+// ════════════════════════════════════════════
+async function doLogin() {
+  const pwd = document.getElementById('login-pwd').value;
+  const res = await fetch('/api/auth/login', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ password: pwd })
+  });
+  const data = await res.json();
+  if (res.ok && data.token) {
+    AUTH_TOKEN = data.token;
+    sessionStorage.setItem('sm_token', AUTH_TOKEN);
+    document.getElementById('login-err').classList.remove('show');
+    showAdmin();
+  } else {
+    document.getElementById('login-err').classList.add('show');
+    document.getElementById('login-pwd').value='';
+    document.getElementById('login-pwd').focus();
+    const card = document.querySelector('.login-card');
+    card.style.animation='none'; card.offsetHeight;
+    card.style.animation='shakeX .35s ease';
+  }
+}
+
+function doLogout() {
+  AUTH_TOKEN = '';
+  sessionStorage.removeItem('sm_token');
+  document.getElementById('admin-shell').classList.remove('visible');
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('login-pwd').value='';
+}
+
+async function showAdmin() {
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('admin-shell').classList.add('visible');
+  await renderAll();
+  loadSettingsUI();
+}
+
+// ════════════════════════════════════════════
+//  TABS
+// ════════════════════════════════════════════
+function goTab(name, btn) {
+  document.querySelectorAll('.tb-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('pane-'+name).classList.add('active');
+  if (name==='services') renderServicesEditor();
+  if (name==='gallery')  renderGalleryAdmin();
+}
+
+function mobGoTab(name) {
+  const tabBtn = document.querySelector('.tb-tab[onclick*="\''+name+'\'"]');
+  if (tabBtn) goTab(name, tabBtn);
+  else {
+    document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+    document.getElementById('pane-'+name).classList.add('active');
+    if (name==='services') renderServicesEditor();
+    if (name==='gallery')  renderGalleryAdmin();
+  }
+  document.querySelectorAll('.mob-nav-link').forEach(l=>l.classList.remove('active'));
+  document.getElementById('mnl-'+name).classList.add('active');
+  closeMobNav();
+}
+
+// ════════════════════════════════════════════
+//  ORDERS — загрузка с сервера
+// ════════════════════════════════════════════
+let _orders = [];
+let currentFilter = 'all';
+
+async function renderAll() {
+  _orders = await api.get('/api/admin/orders');
+  renderStats();
+  renderTable();
+  updateNewBadge();
+}
+
+function renderStats() {
+  const o = _orders;
+  const total  = o.length;
+  const isNew  = o.filter(x=>x.status==='new').length;
+  const inProg = o.filter(x=>x.status==='inprogress').length;
+  const done   = o.filter(x=>x.status==='done').length;
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat-box red">  <div class="stat-val c-red">${total}</div>  <div class="stat-lbl">Всего заявок</div></div>
+    <div class="stat-box">      <div class="stat-val" style="color:var(--amber)">${isNew}</div>  <div class="stat-lbl">Новые</div></div>
+    <div class="stat-box blue"> <div class="stat-val c-blue">${inProg}</div> <div class="stat-lbl">В работе</div></div>
+    <div class="stat-box green"><div class="stat-val c-green">${done}</div>  <div class="stat-lbl">Выполнено</div></div>`;
+}
+
+function updateNewBadge() {
+  const n = _orders.filter(o=>o.status==='new').length;
+  ['new-count-badge','mob-new-badge'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){ el.textContent=n; el.style.display=n?'inline-block':'none'; }
+  });
+}
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('on'));
+  btn.classList.add('on');
+  renderTable();
+}
+
+function renderTable() {
+  let orders = [..._orders];
+  const q = (document.getElementById('search')?.value||'').toLowerCase().trim();
+  if (currentFilter!=='all') orders = orders.filter(o=>o.status===currentFilter);
+  if (q) orders = orders.filter(o=>
+    o.name.toLowerCase().includes(q) ||
+    o.phone.includes(q) ||
+    (o.car||'').toLowerCase().includes(q));
+
+  const tbody    = document.getElementById('tbl-body');
+  const empty    = document.getElementById('empty-state');
+  const mobCards = document.getElementById('mob-cards');
+
+  if (!orders.length) {
+    tbody.innerHTML='';
+    if(mobCards) mobCards.innerHTML='<div class="empty-state"><div class="ei">📋</div><p>Заявок не найдено<br><small>Измените фильтр или дождитесь новых заявок с сайта</small></p></div>';
+    empty.style.display='block'; return;
+  }
+  empty.style.display='none';
+
+  tbody.innerHTML = orders.map(o=>`
+    <tr>
+      <td class="td-id">#${o.id}</td>
+      <td><div class="td-name">${o.name}</div><div class="td-sub">${o.car||''}</div></td>
+      <td class="td-phone">${o.phone}</td>
+      <td><div style="font-size:13px">${o.service}</div><div class="td-sub">${o.carType||''}</div></td>
+      <td class="td-date">${o.date||'—'} ${o.time||''}<br><span style="font-size:11px;color:var(--txt-muted)">создана ${o.created}</span></td>
+      <td><select class="stt-select" onchange="changeStatus(${o.id},this.value)">
+        <option value="new"        ${o.status==='new'       ?'selected':''}>Новая</option>
+        <option value="inprogress" ${o.status==='inprogress'?'selected':''}>В работе</option>
+        <option value="done"       ${o.status==='done'      ?'selected':''}>Готово</option>
+      </select></td>
+      <td><div class="row-actions">
+        <button class="act-btn" onclick="viewOrder(${o.id})" title="Подробнее">👁</button>
+        <button class="act-btn del" onclick="delOrder(${o.id})" title="Удалить">🗑</button>
+      </div></td>
+    </tr>`).join('');
+
+  if(mobCards) mobCards.innerHTML = orders.map(o=>`
+    <div class="mob-card ${o.status}">
+      <div class="mob-card-top">
+        <div><div class="mob-card-name">${o.name}</div><div class="mob-card-sub">${o.service}${o.car?' · '+o.car:''}</div></div>
+        <span class="sbadge ${o.status==='new'?'new':o.status==='inprogress'?'inprogress':'done'}">${o.status==='new'?'Новая':o.status==='inprogress'?'В работе':'Готово'}</span>
+      </div>
+      <div class="mob-card-row"><span>📞</span> ${o.phone}</div>
+      ${o.date?`<div class="mob-card-row"><span>📅</span> ${o.date} ${o.time||''}</div>`:''}
+      <div class="mob-card-bottom">
+        <select class="stt-select" onchange="changeStatus(${o.id},this.value)">
+          <option value="new"        ${o.status==='new'       ?'selected':''}>Новая</option>
+          <option value="inprogress" ${o.status==='inprogress'?'selected':''}>В работе</option>
+          <option value="done"       ${o.status==='done'      ?'selected':''}>Готово</option>
+        </select>
+        <button class="act-btn" onclick="viewOrder(${o.id})">👁</button>
+        <button class="act-btn del" onclick="delOrder(${o.id})">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+async function changeStatus(id, val) {
+  await api.patch('/api/admin/orders/'+id, { status: val });
+  const o = _orders.find(x=>x.id===id);
+  if(o) o.status = val;
+  renderStats(); renderTable(); updateNewBadge();
+  const lbl = {new:'Новая',inprogress:'В работе',done:'Готово'};
+  showToast('Заявка #'+id+' → '+lbl[val]);
+}
+
+async function delOrder(id) {
+  if(!confirm('Удалить заявку #'+id+'?')) return;
+  await api.del('/api/admin/orders/'+id);
+  _orders = _orders.filter(o=>o.id!==id);
+  renderStats(); renderTable(); updateNewBadge();
+  showToast('Заявка #'+id+' удалена');
+}
+
+function viewOrder(id) {
+  const o = _orders.find(x=>x.id===id);
+  if(!o) return;
+  document.getElementById('modal-title').textContent = 'Заявка #'+o.id;
+  document.getElementById('modal-body').innerHTML = `
+    <div class="mf"><div class="mf-lbl">Клиент</div><div class="mf-val">${o.name}</div></div>
+    <div class="mf"><div class="mf-lbl">Телефон</div><div class="mf-val" style="font-family:var(--font-m)">${o.phone}</div></div>
+    <div class="mf"><div class="mf-lbl">Услуга</div><div class="mf-val">${o.service}</div></div>
+    <div class="mf"><div class="mf-lbl">Автомобиль</div><div class="mf-val">${o.carType||''} ${o.car?'— '+o.car:''}</div></div>
+    <div class="mf"><div class="mf-lbl">Дата и время</div><div class="mf-val" style="font-family:var(--font-m)">${o.date||'не указана'} ${o.time||''}</div></div>
+    ${o.comment?`<div class="mf"><div class="mf-lbl">Комментарий</div><div class="mf-val">${o.comment}</div></div>`:''}
+    <div class="mf"><div class="mf-lbl">Создана</div><div class="mf-val" style="font-family:var(--font-m);font-size:12px;color:var(--txt-muted)">${o.created}</div></div>
+    <div class="mf"><div class="mf-lbl">Статус</div>
+      <select class="stt-select" onchange="changeStatus(${o.id},this.value);closeModal()">
+        <option value="new"        ${o.status==='new'       ?'selected':''}>Новая</option>
+        <option value="inprogress" ${o.status==='inprogress'?'selected':''}>В работе</option>
+        <option value="done"       ${o.status==='done'      ?'selected':''}>Готово</option>
+      </select>
+    </div>`;
+  document.getElementById('order-modal').classList.add('open');
+}
+function closeModal() { document.getElementById('order-modal').classList.remove('open'); }
+
+// ════════════════════════════════════════════
+//  SERVICES EDITOR
+// ════════════════════════════════════════════
+let _services = [];
+
+async function renderServicesEditor() {
+  _services = await api.get('/api/services');
+  document.getElementById('svc-editor-grid').innerHTML = _services.map(s=>`
+    <div class="svc-edit-card">
+      <div class="svc-edit-card-title">${s.name}</div>
+      <div class="edit-field"><label>Название</label><input class="edit-input" id="sn-${s.id}"  value="${s.name}"></div>
+      <div class="edit-field"><label>Описание</label><input class="edit-input" id="sd-${s.id}"  value="${s.desc}"></div>
+      <div class="edit-field"><label>Цена (₽)</label><input class="edit-input" id="sp-${s.id}"  value="${s.price}" type="number"></div>
+      <div class="edit-field"><label>Примечание</label><input class="edit-input" id="sno-${s.id}" value="${s.note}"></div>
+      <button class="edit-save-btn" onclick="saveService(${s.id},this)">Сохранить</button>
+      <span class="edit-saved" id="saved-${s.id}">✓ Сохранено</span>
+    </div>`).join('');
+}
+
+async function saveService(id, btn) {
+  const body = {
+    name:  document.getElementById('sn-'+id).value,
+    desc:  document.getElementById('sd-'+id).value,
+    price: document.getElementById('sp-'+id).value,
+    note:  document.getElementById('sno-'+id).value,
+  };
+  await api.patch('/api/admin/services/'+id, body);
+  const s = _services.find(x=>x.id===id);
+  if(s) Object.assign(s, body);
+  btn.closest('.svc-edit-card').querySelector('.svc-edit-card-title').textContent = body.name;
+  const lbl = document.getElementById('saved-'+id);
+  lbl.style.display='inline'; setTimeout(()=>lbl.style.display='none',2000);
+  showToast('Услуга «'+body.name+'» обновлена');
+}
+
+// ════════════════════════════════════════════
+//  GALLERY ADMIN
+// ════════════════════════════════════════════
+let _gallery = [];
+
+async function renderGalleryAdmin() {
+  _gallery = await api.get('/api/admin/gallery');
+  const grid = document.getElementById('gal-admin-grid');
+  if(!grid) return;
+  if(!_gallery.length) {
+    grid.innerHTML='<div class="empty-state"><div class="ei">🖼</div><p>Галерея пуста<br><small>Добавьте фото выше</small></p></div>';
+    return;
+  }
+  grid.innerHTML = _gallery.map(item=>`
+    <div class="gal-admin-card">
+      <img class="gal-admin-img" src="${item.url}" alt="${item.caption}" onerror="this.style.height='40px'">
+      <div class="gal-admin-body">
+        <div class="gal-admin-caption">${item.caption}</div>
+        <input class="gal-admin-input" id="gcap-${item.id}" value="${item.caption}" placeholder="Подпись">
+        <input class="gal-admin-input" id="gurl-${item.id}" value="${item.url}" placeholder="URL фото">
+        <div class="gal-admin-actions">
+          <button class="gal-save-btn" onclick="updateGalleryItem(${item.id})">Сохранить</button>
+          <button class="gal-del-btn"  onclick="deleteGalleryItem(${item.id})">🗑</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+async function addGalleryItem() {
+  const url     = document.getElementById('gal-url').value.trim();
+  const caption = document.getElementById('gal-caption').value.trim();
+  if(!url){ showToast('Укажите URL изображения'); return; }
+  await api.post('/api/admin/gallery', { url, caption });
+  document.getElementById('gal-url').value='';
+  document.getElementById('gal-caption').value='';
+  renderGalleryAdmin();
+  showToast('Фото добавлено в галерею');
+}
+
+async function updateGalleryItem(id) {
+  const body = {
+    caption: document.getElementById('gcap-'+id).value.trim(),
+    url:     document.getElementById('gurl-'+id).value.trim(),
+  };
+  await api.patch('/api/admin/gallery/'+id, body);
+  renderGalleryAdmin();
+  showToast('Фото обновлено');
+}
+
+async function deleteGalleryItem(id) {
+  if(!confirm('Удалить это фото из галереи?')) return;
+  await api.del('/api/admin/gallery/'+id);
+  renderGalleryAdmin();
+  showToast('Фото удалено');
+}
+
+// ════════════════════════════════════════════
+//  SETTINGS
+// ════════════════════════════════════════════
+async function loadSettingsUI() {
+  // Load contacts
+  const c = await api.get('/api/contacts');
+  document.getElementById('s-phone').value      = c.phone      || '';
+  document.getElementById('s-address').value    = c.address    || '';
+  document.getElementById('s-addresssub').value = c.addressSub || '';
+  document.getElementById('s-tg').value         = c.telegram   || '';
+  document.getElementById('s-hours').value      = c.hours      || '';
+  document.getElementById('s-whatsapp').value   = c.whatsapp   || '';
+}
+
+async function saveSiteInfo() {
+  const c = {
+    phone:      document.getElementById('s-phone').value.trim(),
+    address:    document.getElementById('s-address').value.trim(),
+    addressSub: document.getElementById('s-addresssub').value.trim(),
+    telegram:   document.getElementById('s-tg').value.trim(),
+    hours:      document.getElementById('s-hours').value.trim(),
+    whatsapp:   document.getElementById('s-whatsapp').value.trim(),
+  };
+  await api.put('/api/admin/contacts', c);
+  showToast('Контактные данные сохранены — обновятся на сайте');
+}
+
+async function saveNotif() {
+  const email = document.getElementById('notif-email').value.trim();
+  if(email && !email.includes('@')){ showToast('Введите корректный email'); return; }
+  const notif = {
+    email,
+    swNew:    document.getElementById('sw-new').classList.contains('on'),
+    swStatus: document.getElementById('sw-status').classList.contains('on'),
+    swDaily:  document.getElementById('sw-daily').classList.contains('on'),
+  };
+  await api.put('/api/admin/settings', { notif });
+  showToast('Настройки уведомлений сохранены');
+}
+
+async function changePassword() {
+  const cur  = document.getElementById('pwd-current').value;
+  const nw   = document.getElementById('pwd-new').value;
+  const conf = document.getElementById('pwd-confirm').value;
+  const errEl= document.getElementById('pwd-err');
+  const okEl = document.getElementById('pwd-ok');
+  errEl.classList.remove('show'); okEl.classList.remove('show');
+
+  if (nw.length < 6) { errEl.textContent='Минимум 6 символов.'; errEl.classList.add('show'); return; }
+  if (nw !== conf)   { errEl.textContent='Пароли не совпадают.'; errEl.classList.add('show'); return; }
+
+  const res = await api.put('/api/admin/settings', { currentPassword: cur, newPassword: nw });
+  if (res.error) { errEl.textContent=res.error; errEl.classList.add('show'); return; }
+
+  // Update token to new password
+  AUTH_TOKEN = res.token;
+  sessionStorage.setItem('sm_token', AUTH_TOKEN);
+  okEl.classList.add('show');
+  ['pwd-current','pwd-new','pwd-confirm'].forEach(id=>document.getElementById(id).value='');
+  showToast('Пароль успешно изменён');
+}
+
+// ════════════════════════════════════════════
+//  DANGER ZONE
+// ════════════════════════════════════════════
+async function clearDone() {
+  const done = _orders.filter(o=>o.status==='done').length;
+  if(!done){ showToast('Нет выполненных заявок'); return; }
+  if(!confirm('Удалить '+done+' выполненных заявок?')) return;
+  await api.del('/api/admin/orders?status=done');
+  await renderAll();
+  showToast('Удалено '+done+' заявок');
+}
+
+async function clearAllOrders() {
+  if(!_orders.length){ showToast('Заявок нет'); return; }
+  if(!confirm('Удалить ВСЕ заявки? Это действие необратимо.')) return;
+  await api.del('/api/admin/orders');
+  await renderAll();
+  showToast('Все заявки удалены');
+}
+
+// ════════════════════════════════════════════
+//  UI HELPERS
+// ════════════════════════════════════════════
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2800);
+}
+function openMobNav()  { document.getElementById('mob-nav-overlay').classList.add('open'); document.getElementById('mob-nav-drawer').classList.add('open'); document.body.style.overflow='hidden'; }
+function closeMobNav() { document.getElementById('mob-nav-overlay').classList.remove('open'); document.getElementById('mob-nav-drawer').classList.remove('open'); document.body.style.overflow=''; }
+
+// Shake animation
+const shakeStyle = document.createElement('style');
+shakeStyle.textContent = `@keyframes shakeX{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}`;
+document.head.appendChild(shakeStyle);
+</script>
+
+const defaultServices = [
+  { id:1, name:'Сезонная замена',  desc:'Снятие, монтаж и балансировка 4 колёс', price:1800, unit:'от', note:'до R20' },
+  { id:2, name:'Балансировка',     desc:'Балансировка одного колеса на стенде',    price:250,  unit:'от', note:'1 колесо' },
+  { id:3, name:'Шиномонтаж',       desc:'Монтаж/демонтаж шины без балансировки',   price:350,  unit:'от', note:'1 колесо' },
+  { id:4, name:'Хранение шин',     desc:'Сезонное хранение комплекта колёс',       price:2400, unit:'от', note:'сезон' },
+  { id:5, name:'Подкачка / TPMS',  desc:'Регулировка давления, сброс датчика',     price:100,  unit:'от', note:'1 колесо' },
+  { id:6, name:'Ремонт прокола',   desc:'Ремонт шины грибком или жгутом',          price:450,  unit:'от', note:'1 прокол' },
+];
+const defaultOrders = [
+  { id:1, name:'Иван Петров',    phone:'+7 (916) 123-45-67', service:'Сезонная замена', carType:'Легковой',        car:'Toyota Camry R17',    date:'2025-04-02', time:'10:00', comment:'Прошу позвонить за день', status:'new',        created:'01.04.2025 09:15' },
+  { id:2, name:'Анна Смирнова',  phone:'+7 (903) 987-65-43', service:'Балансировка',    carType:'Внедорожник/SUV', car:'Kia Sportage R18',    date:'2025-04-02', time:'12:00', comment:'',                        status:'inprogress',  created:'01.04.2025 11:42' },
+  { id:3, name:'Михаил Козлов',  phone:'+7 (926) 555-44-33', service:'Ремонт прокола',  carType:'Легковой',        car:'VW Polo R15',         date:'2025-04-01', time:'15:00', comment:'Гвоздь в правом заднем',  status:'done',        created:'31.03.2025 18:00' },
+];
+
+function getServices(){ const s=localStorage.getItem(SK); return s?JSON.parse(s):defaultServices; }
+function saveServices(a){ localStorage.setItem(SK,JSON.stringify(a)); }
+function getOrders(){ const o=localStorage.getItem(OK); return o?JSON.parse(o):defaultOrders; }
+function saveOrders(a){ localStorage.setItem(OK,JSON.stringify(a)); }
+function getPwd(){ return localStorage.getItem(PWK) || DEFAULT_PWD; }
+function setPwd(p){ localStorage.setItem(PWK,p); }
+
+// ═══════════════════════════════
+//  BOOTSTRAP
+// ═══════════════════════════════
+(function(){
+  if(!localStorage.getItem(OK)) saveOrders(defaultOrders);
+  if(!localStorage.getItem(SK)) saveServices(defaultServices);
+  // check session
+  if(sessionStorage.getItem('sm_auth')==='1') showAdmin();
+})();
+
+// ═══════════════════════════════
+//  AUTH
+// ═══════════════════════════════
+function doLogin(){
+  const val = document.getElementById('login-pwd').value;
+  if(val === getPwd()){
+    sessionStorage.setItem('sm_auth','1');
+    document.getElementById('login-err').classList.remove('show');
+    showAdmin();
+  } else {
+    document.getElementById('login-err').classList.add('show');
+    document.getElementById('login-pwd').value='';
+    document.getElementById('login-pwd').focus();
+    // shake animation
+    const card = document.querySelector('.login-card');
+    card.style.animation='none'; card.offsetHeight;
+    card.style.animation='shakeX .35s ease';
+  }
+}
+function doLogout(){
+  sessionStorage.removeItem('sm_auth');
+  document.getElementById('admin-shell').classList.remove('visible');
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('login-pwd').value='';
+}
+function showAdmin(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('admin-shell').classList.add('visible');
+  renderAll();
+  loadNotifSettings();
+  loadSiteInfo();
+  renderGalleryAdmin();
+}
+
+// ═══════════════════════════════
+//  TABS
+// ═══════════════════════════════
+function goTab(name, btn){
+  document.querySelectorAll('.tb-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('pane-'+name).classList.add('active');
+  if(name==='services') renderServicesEditor();
+  if(name==='gallery')  renderGalleryAdmin();
+}
+
+// ═══════════════════════════════
+//  RENDER ALL
+// ═══════════════════════════════
+function renderAll(){
+  renderStats();
+  renderTable();
+  updateNewBadge();
+}
+
+// ═══════════════════════════════
+//  STATS
+// ═══════════════════════════════
+function renderStats(){
+  const o = getOrders();
+  const total = o.length;
+  const isNew = o.filter(x=>x.status==='new').length;
+  const inProg = o.filter(x=>x.status==='inprogress').length;
+  const done = o.filter(x=>x.status==='done').length;
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat-box red">
+      <div class="stat-val c-red">${total}</div>
+      <div class="stat-lbl">Всего заявок</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val" style="color:var(--amber)">${isNew}</div>
+      <div class="stat-lbl">Новые</div>
+    </div>
+    <div class="stat-box blue">
+      <div class="stat-val c-blue">${inProg}</div>
+      <div class="stat-lbl">В работе</div>
+    </div>
+    <div class="stat-box green">
+      <div class="stat-val c-green">${done}</div>
+      <div class="stat-lbl">Выполнено</div>
+    </div>
+  `;
+}
+
+function updateNewBadge(){
+  const n = getOrders().filter(o=>o.status==='new').length;
+  const b = document.getElementById('new-count-badge');
+  b.textContent = n;
+  b.style.display = n ? 'inline-block' : 'none';
+  const mb = document.getElementById('mob-new-badge');
+  if(mb){ mb.textContent = n; mb.style.display = n ? 'inline-block' : 'none'; }
+}
+
+// ═══════════════════════════════
+//  TABLE
+// ═══════════════════════════════
+let currentFilter = 'all';
+
+function setFilter(f, btn){
+  currentFilter = f;
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('on'));
+  btn.classList.add('on');
+  renderTable();
+}
+
+function renderTable(){
+  let orders = getOrders();
+  const q = (document.getElementById('search')?.value||'').toLowerCase().trim();
+  if(currentFilter!=='all') orders = orders.filter(o=>o.status===currentFilter);
+  if(q) orders = orders.filter(o=>
+    o.name.toLowerCase().includes(q) ||
+    o.phone.includes(q) ||
+    (o.car||'').toLowerCase().includes(q)
+  );
+
+  const tbody = document.getElementById('tbl-body');
+  const empty = document.getElementById('empty-state');
+  const mobCards = document.getElementById('mob-cards');
+
+  if(!orders.length){
+    tbody.innerHTML='';
+    if(mobCards) mobCards.innerHTML='<div class="empty-state"><div class="ei">📋</div><p>Заявок не найдено<br><small>Измените фильтр или дождитесь новых заявок с сайта</small></p></div>';
+    empty.style.display='block'; return;
+  }
+  empty.style.display='none';
+
+  tbody.innerHTML = orders.map(o=>`
+    <tr>
+      <td class="td-id">#${o.id}</td>
+      <td>
+        <div class="td-name">${o.name}</div>
+        <div class="td-sub">${o.car||''}</div>
+      </td>
+      <td class="td-phone">${o.phone}</td>
+      <td>
+        <div style="font-size:13px">${o.service}</div>
+        <div class="td-sub">${o.carType||''}</div>
+      </td>
+      <td class="td-date">
+        ${o.date||'—'} ${o.time||''}<br>
+        <span style="font-size:11px;color:var(--txt-muted)">создана ${o.created}</span>
+      </td>
+      <td>
+        <select class="stt-select" onchange="changeStatus(${o.id},this.value)">
+          <option value="new"        ${o.status==='new'       ?'selected':''}>Новая</option>
+          <option value="inprogress" ${o.status==='inprogress'?'selected':''}>В работе</option>
+          <option value="done"       ${o.status==='done'      ?'selected':''}>Готово</option>
+        </select>
+      </td>
+      <td>
+        <div class="row-actions">
+          <button class="act-btn" onclick="viewOrder(${o.id})" title="Подробнее">👁</button>
+          <button class="act-btn del" onclick="delOrder(${o.id})" title="Удалить">🗑</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+
+  if(mobCards) mobCards.innerHTML = orders.map(o=>`
+    <div class="mob-card ${o.status}">
+      <div class="mob-card-top">
+        <div>
+          <div class="mob-card-name">${o.name}</div>
+          <div class="mob-card-sub">${o.service}${o.car ? ' · '+o.car : ''}</div>
+        </div>
+        <span class="sbadge ${o.status==='new'?'new':o.status==='inprogress'?'inprogress':'done'}">
+          ${o.status==='new'?'Новая':o.status==='inprogress'?'В работе':'Готово'}
+        </span>
+      </div>
+      <div class="mob-card-row"><span>📞</span> ${o.phone}</div>
+      ${o.date?`<div class="mob-card-row"><span>📅</span> ${o.date} ${o.time||''}</div>`:''}
+      <div class="mob-card-bottom">
+        <select class="stt-select" onchange="changeStatus(${o.id},this.value);renderTable()">
+          <option value="new"        ${o.status==='new'       ?'selected':''}>Новая</option>
+          <option value="inprogress" ${o.status==='inprogress'?'selected':''}>В работе</option>
+          <option value="done"       ${o.status==='done'      ?'selected':''}>Готово</option>
+        </select>
+        <button class="act-btn" onclick="viewOrder(${o.id})" title="Подробнее">👁</button>
+        <button class="act-btn del" onclick="delOrder(${o.id})" title="Удалить">🗑</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function changeStatus(id, val){
+  const orders = getOrders();
+  const o = orders.find(x=>x.id===id);
+  if(!o) return;
+  o.status = val;
+  saveOrders(orders);
+  renderStats(); updateNewBadge();
+  const lbl = {new:'Новая',inprogress:'В работе',done:'Готово'};
+  showToast('Заявка #'+id+' → '+lbl[val]);
+}
+
+function delOrder(id){
+  if(!confirm('Удалить заявку #'+id+'?')) return;
+  saveOrders(getOrders().filter(o=>o.id!==id));
+  renderAll();
+  showToast('Заявка #'+id+' удалена');
+}
+
+function viewOrder(id){
+  const o = getOrders().find(x=>x.id===id);
+  if(!o) return;
+  document.getElementById('modal-title').textContent = 'Заявка #'+o.id;
+  document.getElementById('modal-body').innerHTML = `
+    <div class="mf"><div class="mf-lbl">Клиент</div><div class="mf-val">${o.name}</div></div>
+    <div class="mf"><div class="mf-lbl">Телефон</div><div class="mf-val" style="font-family:var(--font-m)">${o.phone}</div></div>
+    <div class="mf"><div class="mf-lbl">Услуга</div><div class="mf-val">${o.service}</div></div>
+    <div class="mf"><div class="mf-lbl">Автомобиль</div><div class="mf-val">${o.carType||''} ${o.car?'— '+o.car:''}</div></div>
+    <div class="mf"><div class="mf-lbl">Дата и время</div><div class="mf-val" style="font-family:var(--font-m)">${o.date||'не указана'} ${o.time||''}</div></div>
+    ${o.comment?`<div class="mf"><div class="mf-lbl">Комментарий</div><div class="mf-val">${o.comment}</div></div>`:''}
+    <div class="mf"><div class="mf-lbl">Создана</div><div class="mf-val" style="font-family:var(--font-m);font-size:12px;color:var(--txt-muted)">${o.created}</div></div>
+    <div class="mf">
+      <div class="mf-lbl">Статус</div>
+      <select class="stt-select" onchange="changeStatus(${o.id},this.value);closeModal()">
+        <option value="new"        ${o.status==='new'       ?'selected':''}>Новая</option>
+        <option value="inprogress" ${o.status==='inprogress'?'selected':''}>В работе</option>
+        <option value="done"       ${o.status==='done'      ?'selected':''}>Готово</option>
+      </select>
+    </div>
+  `;
+  document.getElementById('order-modal').classList.add('open');
+}
+function closeModal(){ document.getElementById('order-modal').classList.remove('open'); }
+
+// ═══════════════════════════════
+//  SERVICES EDITOR
+// ═══════════════════════════════
+function renderServicesEditor(){
+  const svcs = getServices();
+  document.getElementById('svc-editor-grid').innerHTML = svcs.map(s=>`
+    <div class="svc-edit-card">
+      <div class="svc-edit-card-title">${s.name}</div>
+      <div class="edit-field"><label>Название</label><input class="edit-input" data-id="${s.id}" data-f="name"  value="${s.name}"></div>
+      <div class="edit-field"><label>Описание</label><input class="edit-input" data-id="${s.id}" data-f="desc"  value="${s.desc}"></div>
+      <div class="edit-field"><label>Цена (₽)</label><input class="edit-input" data-id="${s.id}" data-f="price" value="${s.price}" type="number"></div>
+      <div class="edit-field"><label>Примечание</label><input class="edit-input" data-id="${s.id}" data-f="note"  value="${s.note}"></div>
+      <button class="edit-save-btn" onclick="saveService(${s.id},this)">Сохранить</button>
+      <span class="edit-saved" id="saved-${s.id}">✓ Сохранено</span>
+    </div>
+  `).join('');
+}
+
+function saveService(id, btn){
+  const svcs = getServices();
+  const s = svcs.find(x=>x.id===id);
+  if(!s) return;
+  btn.closest('.svc-edit-card').querySelectorAll('.edit-input').forEach(inp=>{
+    s[inp.dataset.f] = inp.value;
+  });
+  saveServices(svcs);
+  const lbl = document.getElementById('saved-'+id);
+  lbl.style.display='inline'; setTimeout(()=>lbl.style.display='none',2000);
+  btn.closest('.svc-edit-card').querySelector('.svc-edit-card-title').textContent = s.name;
+  showToast('Услуга «'+s.name+'» обновлена');
+}
+
+// ═══════════════════════════════
+//  PASSWORD CHANGE
+// ═══════════════════════════════
+function changePassword(){
+  const cur    = document.getElementById('pwd-current').value;
+  const nw     = document.getElementById('pwd-new').value;
+  const conf   = document.getElementById('pwd-confirm').value;
+  const errEl  = document.getElementById('pwd-err');
+  const okEl   = document.getElementById('pwd-ok');
+  errEl.classList.remove('show'); okEl.classList.remove('show');
+
+  if(cur !== getPwd()){
+    errEl.textContent = 'Неверный текущий пароль.';
+    errEl.classList.add('show'); return;
+  }
+  if(nw.length < 6){
+    errEl.textContent = 'Новый пароль должен содержать минимум 6 символов.';
+    errEl.classList.add('show'); return;
+  }
+  if(nw !== conf){
+    errEl.textContent = 'Пароли не совпадают.';
+    errEl.classList.add('show'); return;
+  }
+  setPwd(nw);
+  okEl.classList.add('show');
+  document.getElementById('pwd-current').value='';
+  document.getElementById('pwd-new').value='';
+  document.getElementById('pwd-confirm').value='';
+  showToast('Пароль успешно изменён');
+}
+
+// ═══════════════════════════════
+//  NOTIFICATIONS SETTINGS
+// ═══════════════════════════════
+const NK='shinmaster_notif';
+function loadNotifSettings(){
+  const n=JSON.parse(localStorage.getItem(NK)||'{}');
+  if(n.email) document.getElementById('notif-email').value=n.email;
+  if(n.swNew===false)    document.getElementById('sw-new').classList.remove('on');
+  if(n.swStatus===true)  document.getElementById('sw-status').classList.add('on');
+  if(n.swDaily===true)   document.getElementById('sw-daily').classList.add('on');
+}
+function saveNotif(){
+  const email = document.getElementById('notif-email').value.trim();
+  if(email && !email.includes('@')){
+    showToast('Введите корректный email'); return;
+  }
+  const n={
+    email,
+    swNew:   document.getElementById('sw-new').classList.contains('on'),
+    swStatus:document.getElementById('sw-status').classList.contains('on'),
+    swDaily: document.getElementById('sw-daily').classList.contains('on'),
+  };
+  localStorage.setItem(NK,JSON.stringify(n));
+  showToast(email ? 'Настройки уведомлений сохранены' : 'Укажите email для уведомлений');
+}
+
+// ═══════════════════════════════
+//  SITE INFO SETTINGS
+// ═══════════════════════════════
+const CK='shinmaster_contacts';
+const defaultContacts={
+  phone:'+7 (495) 000-00-00', address:'ул. Шинная, д. 14, стр. 2',
+  addressSub:'500 м от ст. м. Автозаводская',
+  telegram:'@shinmaster_msk', hours:'Пн–Вс: 08:00 — 21:00',
+  whatsapp:'+74950000000'
+};
+function loadSiteInfo(){
+  const c=JSON.parse(localStorage.getItem(CK)||'null')||defaultContacts;
+  document.getElementById('s-phone').value=c.phone||'';
+  document.getElementById('s-address').value=c.address||'';
+  document.getElementById('s-addresssub').value=c.addressSub||'';
+  document.getElementById('s-tg').value=c.telegram||'';
+  document.getElementById('s-hours').value=c.hours||'';
+  document.getElementById('s-whatsapp').value=c.whatsapp||'';
+}
+function saveSiteInfo(){
+  const c={
+    phone:    document.getElementById('s-phone').value.trim(),
+    address:  document.getElementById('s-address').value.trim(),
+    addressSub:document.getElementById('s-addresssub').value.trim(),
+    telegram: document.getElementById('s-tg').value.trim(),
+    hours:    document.getElementById('s-hours').value.trim(),
+    whatsapp: document.getElementById('s-whatsapp').value.trim(),
+  };
+  localStorage.setItem(CK,JSON.stringify(c));
+  showToast('Контактные данные сохранены — обновятся на сайте');
+}
+
+// ═══════════════════════════════
+//  GALLERY ADMIN
+// ═══════════════════════════════
+const GK = 'shinmaster_gallery';
+const defaultGallery = [
+  {id:1, url:'https://images.unsplash.com/photo-1592840496694-26d035b52b48?w=800&q=80', caption:'Главный зал'},
+  {id:2, url:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80',    caption:'Оборудование'},
+  {id:3, url:'https://images.unsplash.com/photo-1625047509248-ec889cbff17f?w=800&q=80', caption:'Балансировка'},
+  {id:4, url:'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80', caption:'Приёмка авто'},
+  {id:5, url:'https://images.unsplash.com/photo-1634714579048-c9c3d2e3ebf7?w=800&q=80', caption:'Хранение шин'},
+];
+function getGallery(){ const g=localStorage.getItem(GK); return g?JSON.parse(g):defaultGallery; }
+function saveGallery(a){ localStorage.setItem(GK,JSON.stringify(a)); }
+
+function renderGalleryAdmin(){
+  const items = getGallery();
+  const grid = document.getElementById('gal-admin-grid');
+  if(!grid) return;
+  if(!items.length){
+    grid.innerHTML='<div class="empty-state"><div class="ei">🖼</div><p>Галерея пуста<br><small>Добавьте фото выше</small></p></div>';
+    return;
+  }
+  grid.innerHTML = items.map(item=>`
+    <div class="gal-admin-card">
+      <img class="gal-admin-img" src="${item.url}" alt="${item.caption}" onerror="this.style.background='#2a2a2a';this.style.height='60px'">
+      <div class="gal-admin-body">
+        <div class="gal-admin-caption">${item.caption}</div>
+        <input class="gal-admin-input" id="gcap-${item.id}" value="${item.caption}" placeholder="Подпись">
+        <input class="gal-admin-input" id="gurl-${item.id}" value="${item.url}" placeholder="URL фото">
+        <div class="gal-admin-actions">
+          <button class="gal-save-btn" onclick="updateGalleryItem(${item.id})">Сохранить</button>
+          <button class="gal-del-btn"  onclick="deleteGalleryItem(${item.id})">🗑</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function addGalleryItem(){
+  const url     = document.getElementById('gal-url').value.trim();
+  const caption = document.getElementById('gal-caption').value.trim();
+  if(!url){ showToast('Укажите URL изображения'); return; }
+  const items = getGallery();
+  const id = items.length ? Math.max(...items.map(i=>i.id))+1 : 1;
+  items.push({ id, url, caption: caption||'Фото '+id });
+  saveGallery(items);
+  document.getElementById('gal-url').value='';
+  document.getElementById('gal-caption').value='';
+  renderGalleryAdmin();
+  showToast('Фото добавлено в галерею');
+}
+
+function updateGalleryItem(id){
+  const items = getGallery();
+  const item  = items.find(i=>i.id===id);
+  if(!item) return;
+  item.caption = document.getElementById('gcap-'+id).value.trim()||item.caption;
+  item.url     = document.getElementById('gurl-'+id).value.trim()||item.url;
+  saveGallery(items);
+  renderGalleryAdmin();
+  showToast('Фото обновлено');
+}
+
+function deleteGalleryItem(id){
+  if(!confirm('Удалить это фото из галереи?')) return;
+  saveGallery(getGallery().filter(i=>i.id!==id));
+  renderGalleryAdmin();
+  showToast('Фото удалено');
+}
+
+// ═══════════════════════════════
+// ═══════════════════════════════
+function clearDone(){
+  const orders = getOrders().filter(o=>o.status!=='done');
+  const removed = getOrders().length - orders.length;
+  if(!removed){ showToast('Нет выполненных заявок'); return; }
+  if(!confirm('Удалить '+removed+' выполненных заявок?')) return;
+  saveOrders(orders); renderAll();
+  showToast('Удалено '+removed+' заявок со статусом «Готово»');
+}
+function clearAllOrders(){
+  if(!getOrders().length){ showToast('Заявок нет'); return; }
+  if(!confirm('Удалить ВСЕ заявки? Это действие необратимо.')) return;
+  saveOrders([]); renderAll();
+  showToast('Все заявки удалены');
+}
+
+// ═══════════════════════════════
+//  TOAST
+// ═══════════════════════════════
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// ═══════════════════════════════
+//  MOBILE NAV
+// ═══════════════════════════════
+let currentTabName = 'orders';
+
+function openMobNav(){
+  document.getElementById('mob-nav-overlay').classList.add('open');
+  document.getElementById('mob-nav-drawer').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeMobNav(){
+  document.getElementById('mob-nav-overlay').classList.remove('open');
+  document.getElementById('mob-nav-drawer').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function mobGoTab(name){
+  const tabBtn = document.querySelector('.tb-tab[onclick*="\''+name+'\'"]');
+  if(tabBtn) goTab(name, tabBtn);
+  else {
+    document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+    document.getElementById('pane-'+name).classList.add('active');
+    if(name==='services') renderServicesEditor();
+    if(name==='gallery')  renderGalleryAdmin();
+  }
+  document.querySelectorAll('.mob-nav-link').forEach(l=>l.classList.remove('active'));
+  document.getElementById('mnl-'+name).classList.add('active');
+  currentTabName = name;
+  closeMobNav();
+}
+
+// ═══════════════════════════════
+//  SHAKE ANIMATION
+// ═══════════════════════════════
+const shakeStyle = document.createElement('style');
+shakeStyle.textContent = `
+  @keyframes shakeX {
+    0%,100%{ transform: translateX(0); }
+    20%{ transform: translateX(-8px); }
+    40%{ transform: translateX(8px); }
+    60%{ transform: translateX(-6px); }
+    80%{ transform: translateX(6px); }
+  }
+`;
+document.head.appendChild(shakeStyle);
+</script>
+</body>
+</html>
